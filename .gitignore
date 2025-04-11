@@ -1,0 +1,4 @@
+.env
+error_logs/
+ppt/
+venv/

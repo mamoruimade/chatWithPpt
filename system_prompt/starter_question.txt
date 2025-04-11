@@ -1,0 +1,1 @@
+Please generate 5x quetions that are related on this document to provide starter prompts for users. Answers of these questions must be mentioned exactly in this document. No need to dislay any characters/sentences other than question list with numbers.
