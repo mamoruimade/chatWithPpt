@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 import certifi
 from dotenv import load_dotenv
@@ -106,16 +107,28 @@ def list_ppt_files(folder_path):
     ppt_files.sort()
     return ppt_files
 
-# Function to extract text from a PowerPoint file
-def extract_text_from_ppt(file_path):
-    text = ""
+# Function to extract text, title, and slide number from a PowerPoint file
+def extract_text_with_metadata_from_ppt(file_path):
+    slides_data = []
     presentation = Presentation(file_path)
-    for slide in presentation.slides:
+    for slide_number, slide in enumerate(presentation.slides, start=1):
+        slide_text = ""
+        slide_title = None
+
         for shape in slide.shapes:
             if shape.has_text_frame:
                 for paragraph in shape.text_frame.paragraphs:
-                    text += paragraph.text + "\n"
-    return text
+                    slide_text += paragraph.text + "\n"
+            if shape.has_text_frame and shape.text_frame.text and not slide_title:
+                slide_title = shape.text_frame.text  # Use the first text as the title if available
+
+        slides_data.append({
+            "title": slide_title if slide_title else f"Slide {slide_number}",
+            "slide_number": slide_number,
+            "text": slide_text.strip()
+        })
+
+    return slides_data
 
 def main():
     ppt_folder = os.path.join("C:\\", "python_scripts", "pptChat", "ppt")
@@ -136,18 +149,27 @@ def main():
     selected_file = ppt_files[selected_num - 1]
     ppt_path = os.path.join(ppt_folder, selected_file)
 
-    # Extract text from the selected PowerPoint file
-    extracted_text = extract_text_from_ppt(ppt_path)
-    if not extracted_text.strip():
+    # Extract text with metadata from the selected PowerPoint file
+    slides_data = extract_text_with_metadata_from_ppt(ppt_path)
+    if not slides_data:
         print("No text extracted from the selected PowerPoint file.")
         return
 
-    print("Text extracted from the PowerPoint file:")
-    print(extracted_text)
+    # Convert the extracted data to JSON format
+    slides_json = json.dumps(slides_data, indent=4, ensure_ascii=False)
+    print("Extracted slides data in JSON format:")
+    print(slides_json)
 
-    # Set the extracted text as the system prompt
-    system_message = extracted_text
-    print("System prompt set with the extracted PowerPoint text.")
+    # Save the JSON to a file with the same name as the PowerPoint file
+    json_filename = os.path.splitext(selected_file)[0] + ".json"
+    output_file = os.path.join(ppt_folder, json_filename)
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(slides_json)
+    print(f"Slides data saved to {output_file}")
+
+    # Set the extracted JSON data as the system prompt
+    system_message = slides_json
+    print("System prompt set with the extracted PowerPoint metadata.")
 
     # Instantiate the text generator
     generator = OpenAITextGenerator(openai_api_base, deployment_name, get_access_token(), subscription_key)
