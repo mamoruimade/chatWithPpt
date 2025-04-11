@@ -174,16 +174,45 @@ def main():
     # Instantiate the text generator
     generator = OpenAITextGenerator(openai_api_base, deployment_name, get_access_token(), subscription_key)
 
+    # Initialize memory to store the conversation
+    conversation_memory = [
+        {"role": "system", "content": system_message}
+    ]
+
+    # Clear the conversation history file at the start of the session
+    conversation_file = os.path.join(ppt_folder, "conversation_history.json")
+    with open(conversation_file, "w", encoding="utf-8") as f:
+        json.dump([], f, indent=4, ensure_ascii=False)  # Clear the file by writing an empty list
+    print(f"Cleared previous conversation history in {conversation_file}")
+
     # Chat with the extracted text as the system prompt
     while True:
         user_message = input("Enter your prompt (type 'exit' to quit): ")
         if user_message.strip().lower() == "exit":
             break
-        response = generator.send_request(system_message, user_message)
+
+        # Add user message to memory
+        conversation_memory.append({"role": "user", "content": user_message})
+
+        # Send the entire conversation memory to the AI
+        response = generator.send_request(
+            system_message=system_message,
+            user_message=json.dumps(conversation_memory, ensure_ascii=False)
+        )
+
+        # Add AI response to memory
+        conversation_memory.append({"role": "assistant", "content": response})
+
+        # Display the AI's response
         responseLabel = "\n\n" + "Response:" + "\n"
         print(responseLabel)
         print(response)
         print()
+
+    # Save the conversation memory to a file
+    with open(conversation_file, "w", encoding="utf-8") as f:
+        json.dump(conversation_memory, f, indent=4, ensure_ascii=False)
+    print(f"Conversation history saved to {conversation_file}")
 
 if __name__ == "__main__":
     main()
