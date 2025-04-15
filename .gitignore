@@ -1,4 +1,17 @@
 .env
-error_logs/
-ppt/
 venv/
+main_backup/
+
+# Ignore all files in conversation_history folder
+conversation_history/*
+ppt/*
+ppt_json/*
+error_logs/*
+text_extraction_management_files/*
+
+# But include the folder itself
+!conversation_history/
+!ppt/
+!ppt_json/
+!error_logs/
+!text_extraction_management_files/
