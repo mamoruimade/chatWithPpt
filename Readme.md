@@ -1,12 +1,12 @@
 # PowerPoint Chat Assistant
 
-This project enables users to interact with the content of PowerPoint files (`.ppt`, `.pptx`, `.pptm`) using Azure OpenAI services. The script extracts text from PowerPoint files, combines it with a predefined system prompt, and uses it as a system message for generating conversational responses.
+This project enables users to interact with the content of PowerPoint files (`.ppt`, `.pptx`, `.pptm`) using Azure OpenAI services. The script extracts text from PowerPoint files, combines it with a predefined system prompt, and uses it as a system message for generating conversational responses. Additionally, a Streamlit-based web interface (`main_st.py`) is provided for a more user-friendly experience.
 
 ---
 
 ## Features
 
-- **PowerPoint Text Extraction**: Extracts text, titles, and slide numbers from PowerPoint files.
+- **PowerPoint Text Extraction**: Extracts text, titles, slide numbers, and presenter notes from PowerPoint files.
 - **File Metadata**: Includes the original PowerPoint file name in the extracted JSON data.
 - **System Prompt Integration**: Automatically prepends a predefined prompt (`pre_paper_prompt.txt`) to the extracted content for consistent instructions to the AI.
 - **Conversation Management**: Saves conversation history with timestamps in the conversation_history folder.
@@ -15,6 +15,7 @@ This project enables users to interact with the content of PowerPoint files (`.p
   - Tracks PowerPoint file updates and re-extracts text only if the file is modified.
 - **Error Logging**: Logs errors to a dedicated folder for debugging.
 - **JSON File Handling**: Allows users to interact with previously extracted JSON files.
+- **Streamlit Web Interface**: Provides a user-friendly interface for uploading PowerPoint files, extracting text, and interacting with the AI.
 
 ---
 
@@ -27,6 +28,7 @@ Ensure the following Python libraries are installed:
 - `python-dotenv`
 - `urllib3`
 - `python-pptx`
+- `streamlit`
 
 You can install the required libraries using:
 ```bash
@@ -35,7 +37,7 @@ pip install -r requirements.txt
 
 Alternatively, install them individually:
 ```bash
-pip install requests certifi python-dotenv urllib3 python-pptx
+pip install requests certifi python-dotenv urllib3 python-pptx streamlit
 ```
 
 ### 2. Set Up Environment Variables
@@ -88,7 +90,7 @@ When prompted, select one of the following options:
 3. Choose the desired PowerPoint file by entering its corresponding number.
 4. The script will:
    - Check if the file has been modified since the last extraction.
-   - Extract text, titles, and slide numbers from the file.
+   - Extract text, titles, slide numbers, and presenter notes from the file.
    - Save the extracted data as a JSON file in the ppt_json folder.
    - Update the metadata in the text_extraction_management_files folder.
 
@@ -104,36 +106,62 @@ When prompted, select one of the following options:
 
 ---
 
-## Error Handling
-If an error occurs during execution, the script logs the details in the error_logs folder. Check the log files for debugging.
+## Streamlit Integration (`main_st.py`)
 
----
+main_st.py provides a web-based interface for interacting with the PowerPoint Chat Assistant using Streamlit.
 
-## Notes
-- Ensure the .env file contains valid credentials for Azure OpenAI services.
-- The script disables SSL warnings for simplicity. For production use, ensure proper SSL configurations.
-- The conversation_history folder is included in the repository, but its contents are ignored by .gitignore.
+### 1. Install Streamlit
+Ensure Streamlit is installed:
+```bash
+pip install streamlit
+```
 
----
+### 2. Run the Streamlit App
+Start the Streamlit app by running:
+```bash
+streamlit run main_st.py
+```
 
-## Example JSON Output
-The extracted JSON file will have the following structure:
+### 3. Using the Streamlit App
+
+#### Sidebar
+- **PowerPoint File Upload**: Upload a PowerPoint file. The app will extract text, titles, slide numbers, and presenter notes, and save them as a JSON file.
+- **JSON File Selection**: Select a previously extracted JSON file to use as the system message.
+
+#### Main Area
+- **Chat Interface**:
+  - Interact with the AI using the extracted content as the system message.
+  - Enter your message in the input box, and the AI will respond.
+
+### 4. JSON Output Structure
+The extracted JSON file includes the following structure:
 ```json
 [
     {
         "file_name": "example.pptx",
         "title": "Slide 1",
         "slide_number": 1,
-        "text": "This is the content of slide 1."
+        "text": "This is the content of slide 1.",
+        "note": "This is the note for slide 1."
     },
     {
         "file_name": "example.pptx",
         "title": "Slide 2",
         "slide_number": 2,
-        "text": "This is the content of slide 2."
+        "text": "This is the content of slide 2.",
+        "note": "This is the note for slide 2."
     }
 ]
 ```
+
+### 5. Notes
+- Ensure the .env file contains valid credentials for Azure OpenAI services.
+- To stop the Streamlit app, press `Ctrl+C` in the terminal.
+
+---
+
+## Error Handling
+If an error occurs during execution, the script logs the details in the error_logs folder. Check the log files for debugging.
 
 ---
 
@@ -148,6 +176,7 @@ pptChat/
 ├── system_prompt/               # Store pre_paper_prompt.txt
 ├── error_logs/                  # Store error logs
 ├── main.py                      # Main script
+├── main_st.py                   # Streamlit-based web interface
 ├── .env                         # Environment variables
 └── requirements.txt             # Python dependencies
 ```

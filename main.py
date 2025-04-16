@@ -109,29 +109,40 @@ def list_ppt_files(folder_path):
     return ppt_files
 
 # Function to extract text, title, and slide number from a PowerPoint file
-# Function to extract text, title, and slide number from a PowerPoint file
 def extract_text_with_metadata_from_ppt(file_path):
-    """Extract text, title, slide number, and file name from a PowerPoint file."""
+    """Extract text, title, slide number, notes, file name, and slide link from a PowerPoint file."""
     slides_data = []
     presentation = Presentation(file_path)
-    file_name = os.path.basename(file_path)  # Get the file name from the file path
+    file_name = os.path.basename(file_path)  # Get the file name
+    abs_path = os.path.abspath(file_path)    # Convert to absolute path
 
     for slide_number, slide in enumerate(presentation.slides, start=1):
         slide_text = ""
         slide_title = None
+        slide_notes = None
 
+        # Extract text from slide shapes
         for shape in slide.shapes:
             if shape.has_text_frame:
                 for paragraph in shape.text_frame.paragraphs:
                     slide_text += paragraph.text + "\n"
             if shape.has_text_frame and shape.text_frame.text and not slide_title:
-                slide_title = shape.text_frame.text  # Use the first text as the title if available
+                slide_title = shape.text_frame.text
+
+        # Extract notes from the slide
+        if slide.has_notes_slide and slide.notes_slide.notes_text_frame:
+            slide_notes = slide.notes_slide.notes_text_frame.text.strip()
+
+        # Create a link to the slide (e.g., file:///<absolute_path>#slide=<slide_number>)
+        slide_link = f"file:///{abs_path}#slide={slide_number}"
 
         slides_data.append({
-            "file_name": file_name,  # Add the file name to each slide's data
+            "file_name": file_name,
             "title": slide_title if slide_title else f"Slide {slide_number}",
             "slide_number": slide_number,
-            "text": slide_text.strip()
+            "text": slide_text.strip(),
+            "note": slide_notes if slide_notes else "",  # Add notes to the JSON
+            "slide_link": slide_link
         })
 
     return slides_data
@@ -195,10 +206,13 @@ def main():
     pre_paper_prompt = load_pre_paper_prompt()
 
     while True:
+        print("\n")
         print("Select an option:")
+        print("\n")
         print("1: New ppt file")
         print("2: Existing json files")
         print("3: Exit")
+        print("\n")
         option = int(input("Enter your choice: "))
 
         if option == 1:
@@ -208,9 +222,12 @@ def main():
                 print("No PowerPoint files found in the folder.")
                 continue
 
+            print("\n")
             print("Select a PowerPoint file by entering its number:")
+            print("\n")
             for idx, filename in enumerate(ppt_files, start=1):
                 print(f"{idx}: {filename}")
+            print("\n")
             selected_num = int(input("Enter the number: "))
             selected_file = ppt_files[selected_num - 1]
             ppt_path = os.path.join(ppt_folder, selected_file)
@@ -221,6 +238,7 @@ def main():
 
             if selected_file in management_data and management_data[selected_file] == last_modified_str:
                 print("No new update found.")
+                print("\n")
                 json_filename = os.path.splitext(selected_file)[0] + ".json"
                 output_file = os.path.join(ppt_json_folder, json_filename)
                 with open(output_file, "r", encoding="utf-8") as f:
@@ -230,6 +248,7 @@ def main():
                 slides_data = extract_text_with_metadata_from_ppt(ppt_path)
                 if not slides_data:
                     print("No text extracted from the selected PowerPoint file.")
+                    print("\n")
                     continue
 
                 # Convert the extracted data to JSON format
@@ -241,6 +260,7 @@ def main():
                 with open(output_file, "w", encoding="utf-8") as f:
                     f.write(slides_json)
                 print(f"Slides data saved to {output_file}")
+                print("\n")
 
                 # Update management data
                 management_data[selected_file] = last_modified_str
@@ -254,12 +274,16 @@ def main():
             json_files = [f for f in os.listdir(ppt_json_folder) if f.lower().endswith(".json")]
             if not json_files:
                 print("No JSON files found in the folder.")
+                print("\n")
                 continue
-
+            
+            print("\n")
             print("Select a JSON file by entering its number:")
+            print("\n")
             for idx, filename in enumerate(json_files, start=1):
                 print(f"{idx}: {filename}")
             print(f"{len(json_files) + 1}: All JSON files")
+            
             selected_num = int(input("Enter the number: "))
 
             if selected_num == len(json_files) + 1:
